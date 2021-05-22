@@ -27,7 +27,7 @@ rowMissing = df.isna().sum(axis=1)  # check missing value (row)
 reduced_df1 = df
 
 
-reduced_df2 = reduced_df1[reduced_df1.isna().sum(axis=1) < 25]   # drop row with more than 15 missing value
+reduced_df2 = reduced_df1[reduced_df1.isna().sum(axis=1) < 25]   # drop row with more than 25 missing value
 # print(reduced_df2.isna().sum(axis=1))
 print(reduced_df2.shape[1])                    #the number of column left
 # print(reduced_df2.shape[0])                    #the number of row left
