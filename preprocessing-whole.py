@@ -19,6 +19,14 @@ df.replace(0, np.nan, inplace=True)
 df.replace('>99', 99, inplace=True)
 #print(df.head(10))
 
+# formatting the data type
+# print(df.dtypes)
+df['RSA'] = df['RSA'].astype('float64')
+df['rural water supply'] = df['rural water supply'].astype('float64')
+df['urban water supply'] = df['urban water supply'].astype('float64')
+df['ARA'] = df['ARA'].astype('float64')
+
+
 columnMissing = df.isna().sum(axis=0)  # check missing value (column)
 rowMissing = df.isna().sum(axis=1)  # check missing value (row)
 #print(columnMissing)
@@ -49,12 +57,6 @@ for i in columnNames:
 
 print(reduced_df2.shape[1])                    #the number of column left
 
-# formatting the data type
-# print(reduced_df2.dtypes)
-reduced_df2['RSA'] = reduced_df2['RSA'].astype('float64')
-reduced_df2['rural water supply'] = reduced_df2['rural water supply'].astype('float64')
-reduced_df2['urban water supply'] = reduced_df2['urban water supply'].astype('float64')
-# reduced_df2['ARA'] = reduced_df2['ARA'].astype('float64')
 
 
 # fill all NA value with average
