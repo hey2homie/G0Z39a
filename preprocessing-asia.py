@@ -5,64 +5,50 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.model_selection import train_test_split
 
+asia = pd.read_csv('wholedataAsia.csv')
 
-df = pd.read_csv('wholedata.csv')  # input data as data frame
-
-#test1 = df.head(5)
 pd.set_option('display.max_columns', None)  # showing all columns
 pd.set_option('display.max_rows', None)  # showing all rows
 # print(test1)
 
-# data formatting
-df.replace('-', np.nan, inplace=True)
-df.replace(0, np.nan, inplace=True)
-df.replace('>99', 99, inplace=True)
-#print(df.head(10))
 
-columnMissing = df.isna().sum(axis=0)  # check missing value (column)
-rowMissing = df.isna().sum(axis=1)  # check missing value (row)
+columnMissing = asia.isna().sum(axis=0)  # check missing value (column)
+rowMissing = asia.isna().sum(axis=1)  # check missing value (row)
 #print(columnMissing)
-#print(rowMissing)  # 47 row
+#print(rowMissing)      # 47 row - asia
 
-reduced_df1 = df
-
-
-reduced_df2 = reduced_df1[reduced_df1.isna().sum(axis=1) < 25]   # drop row with more than 15 missing value
-# print(reduced_df2.isna().sum(axis=1))
-print(reduced_df2.shape[1])                    #the number of column left
-# print(reduced_df2.shape[0])                    #the number of row left
+reducedAsia1 = asia
 
 
-def drop_col(dataframe, col_name,cutoff=0.85):  #e.g. cutoff = 0.8, one column contains less than 80% non NA value to be droped
-    n = len(dataframe)
-    cnt = dataframe[col_name].count()
+
+def drop_col(df, col_name,cutoff=0.7):  #e.g. cutoff = 0.8, one column contains less than 80% non NA value to be droped
+    n = len(df)
+    cnt = df[col_name].count()
 
     if (float(cnt) / n) < cutoff:
-        dataframe.drop(col_name, axis=1, inplace=True)
-        return dataframe
+        df.drop(col_name, axis=1, inplace=True)
+        return df
 
-columnNames = reduced_df2.columns.values.tolist()
+columnNames = reducedAsia1.columns.values.tolist()
 print(columnNames)
 
 for i in columnNames:
-    drop_col(reduced_df2,i)
+    drop_col(reducedAsia1,i)
 
-print(reduced_df2.shape[1])                    #the number of column left
 
-# formatting the data type
-# print(reduced_df2.dtypes)
-reduced_df2['RSA'] = reduced_df2['RSA'].astype('float64')
-reduced_df2['rural water supply'] = reduced_df2['rural water supply'].astype('float64')
-reduced_df2['urban water supply'] = reduced_df2['urban water supply'].astype('float64')
-# reduced_df2['ARA'] = reduced_df2['ARA'].astype('float64')
+print(reducedAsia1.isna().sum())
+
+reducedAsia2 = reducedAsia1[reducedAsia1.isna().sum(axis=1) < 10]   # drop row with more than 15 missing value
+print(reducedAsia2.isna().sum(axis=1))
+print(reducedAsia2.shape[1])                    #the number of row left
 
 
 # fill all NA value with average
-numeric = reduced_df2.select_dtypes(include=np.number)
+numeric = reducedAsia2.select_dtypes(include=np.number)
 numeric_columns = numeric.columns
-# print(numeric_columns)
-reduced_df2[numeric_columns] = reduced_df2[numeric_columns].fillna(reduced_df2.mean())
-print(reduced_df2.isna().sum())
+print(numeric_columns)
+reducedAsia2[numeric_columns] = reducedAsia2[numeric_columns].fillna(reducedAsia2.mean())
+print(reducedAsia2.isna().sum())
 
 
 
@@ -72,30 +58,26 @@ print(reduced_df2.isna().sum())
 # Normalization
 
 # remove the column of country name & water securty index
-country_name = reduced_df2.iloc[:,0]  #get the content of country name column
+country_name = reducedAsia2.iloc[:,0]  #get the content of country name column
+water_index = reducedAsia2.iloc[:,1]
 
-norm_data = reduced_df2.drop('country',axis=1,inplace=False)
+norm_data_asia = reducedAsia2.drop('country',axis=1,inplace=False)
+norm_data_asia = norm_data_asia.drop('water security index',axis=1,inplace=False)
 # print(norm_data_asia.dtypes)
 
 #normalization
-norm_df = norm_data.apply(lambda x: (x - np.min(x)) / (np.max(x) - np.min(x)))
-#print(norm_asia.head(5))
+norm_asia = norm_data_asia.apply(lambda x: (x - np.min(x)) / (np.max(x) - np.min(x)))
+# print(norm_asia.head(5))
 
 #add the column of country name
-norm_df.insert(0,'country',country_name)
-#print(norm_df.head(5))
+norm_asia.insert(0,'country',country_name)
+norm_asia.insert(1,'water security index',water_index)
+#print(norm_asia.head(5))
 
 
-# 2. min-max, SKL
-
-# create a scaler object
-#scaler2 = MinMaxScaler()
-# fit and transform the data
-#asia_norm = pd.DataFrame(scaler.fit_transform(df_cars), columns=df_cars.columns)
 
 
 
 # output the preprocessed dataframe
-norm_df.to_csv('average whole.csv')
-
+norm_asia.to_csv('average asia.csv')
 
