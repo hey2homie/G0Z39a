@@ -43,6 +43,7 @@ for i in countries["features"]:
 
 # App
 app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
+server = app.server
 
 app.layout = html.Div(
     className="Main",
