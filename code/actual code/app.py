@@ -42,7 +42,7 @@ for i in countries["features"]:
     i["id"] = (i["properties"]["name"])
 
 # App
-app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
+app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 server = app.server
 
 app.layout = html.Div(
