@@ -14,14 +14,13 @@ import plotly.express as px
 import plotly.graph_objs as go
 
 # Dataframes and lists
-df_main = [pd.read_excel("../../data/prepared_indexes/2013.xlsx"),
-           pd.read_excel("../../data/prepared_indexes/2016.xlsx"),
-           pd.read_excel("../../data/prepared_indexes/2020.xlsx")]
+df_main = [pd.read_excel("./data/prepared_indexes/2013.xlsx"), pd.read_excel("./data/prepared_indexes/2016.xlsx"),
+           pd.read_excel("./data/prepared_indexes/2020.xlsx")]
 
-individual_indices_2016 = [pd.read_excel("../../data/prepared_indexes/all_kd//2016/" + x) for x in
-                           list(os.listdir("../../data/prepared_indexes/all_kd/2016/")[::-1])]
-individual_indices_2020 = [pd.read_excel("../../data/prepared_indexes/all_kd/2020/" + x) for x in
-                           list(os.listdir("../../data/prepared_indexes/all_kd/2020/")[::-1])]
+individual_indices_2016 = [pd.read_excel("./data/prepared_indexes/all_kd//2016/" + x) for x in
+                           list(os.listdir("./data/prepared_indexes/all_kd/2016/")[::-1])]
+individual_indices_2020 = [pd.read_excel("./data/prepared_indexes/all_kd/2020/" + x) for x in
+                           list(os.listdir("./data/prepared_indexes/all_kd/2020/")[::-1])]
 
 countries_by_region = [
     ["Afghanistan", "Armenia", "Azerbaijan", "Georgia", "Kazakhstan", "Kyrgyzstan", "Pakistan", "Tajikistan",
@@ -36,7 +35,7 @@ countries_by_region = [
 ]
 
 # JSON
-with open("custom.geo-4.json", "r", encoding="utf-8") as f:
+with open("./code/actual code/custom.geo-4.json", "r", encoding="utf-8") as f:
     countries = json.load(f)
 
 for i in countries["features"]:
