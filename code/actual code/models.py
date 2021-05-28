@@ -5,6 +5,13 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import SelectFromModel
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
+from sklearn import svm
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import make_scorer, f1_score
+
+
+def split(x, y):
+    return train_test_split(x, y, test_size=0.33, random_state=0)
 
 
 class TreeModelBuilder:
@@ -14,11 +21,7 @@ class TreeModelBuilder:
         self.df = self.df.values
         self.x = self.df[:, 2:self.df.shape[1]]
         self.y = self.df[:, 1].astype('float')
-        self.x_train, self.x_test, self.y_train, self.y_test = None, None, None, None
-
-    def split(self):
-        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.x, self.y,
-                                                                                test_size=0.33, random_state=0)
+        self.x_train, self.x_test, self.y_train, self.y_test = split(self.x, self.y)
 
     def __building_model(self, x_train, y_train, model_type, number=10000):
         if model_type == "RD":
@@ -55,12 +58,45 @@ class TreeModelBuilder:
         if model_type != "RD":
             number = 0.01
 
-        self.split()
         model = self.__building_model(self.x_train, self.y_train, model_type=model_type)
         rebuild_model = self.__rebuild_model(model, model_type=model_type, number=number)
 
         return [self.__get_score(model, model_type=model_type),
                 self.__get_accuracy(rebuild_model[1], model_type=model_type)]
+
+
+class SupportVectorMachine:
+
+    def __init__(self, dataframe):
+        self.df = pd.read_csv(dataframe)
+        self.y = self.df['water security index']
+        self.x = self.df.iloc[:, 2:]
+        self.x_train, self.x_test, self.y_train, self.y_test = split(self.x, self.y)
+        self.model = None
+
+    def __build_model(self, c=None, gamma=None):
+        clf = svm.SVC(decision_function_shape='ovo', C=c, gamma=gamma)
+        model = clf.fit(self.x_train, self.y_train)
+        return model
+
+    def __tuning_model(self):
+        grid_parameters = {
+            'svc__C': [2 ** x for x in range(-5, 13)],
+            'svc_gamma': [2 ** x for x in range(-12, 4)]
+        }
+        grid = GridSearchCV(self.__build_model(), param_grid=grid_parameters,
+                            cv=5, scoring=make_scorer(f1_score, average="weighted"), n_jobs=2,
+                            return_train_score=True, verbose=3)
+        grid.fit(self.x_train, self.y_train)
+        best_parameters = grid.best_params_
+        rebuild_model = self.__build_model(best_parameters.get("svc__gamma"), best_parameters.get("svc__C"))
+        return rebuild_model
+
+    def __get_accuracy(self, model):
+        accuracy_score_not_tuned = self.__build_model().score(self.x_test, self.y_test)
+        accuracy_score_tuned = self.__tuning_model().score(self.x_test, self.y_test)
+        return str("Results of model: " + accuracy_score_not_tuned + "\n" +
+                   "Results of tuned model:" + accuracy_score_tuned)
 
 # ---------------------------------------------------------------------------------------------------
 # After creating an instance of this class and calling two methods for each model, should produce a 
