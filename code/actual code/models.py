@@ -8,7 +8,10 @@ from sklearn.model_selection import train_test_split
 from sklearn import svm
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import make_scorer, f1_score
-
+from sklearn.linear_model import RidgeClassifierCV
+from sklearn.model_selection import cross_val_score
+from sklearn.ensemble import BaggingClassifier
+from sklearn.ensemble import AdaBoostClassifier
 
 def split(x, y):
     return train_test_split(x, y, test_size=0.33, random_state=0)
@@ -26,6 +29,10 @@ class TreeModelBuilder:
     def __building_model(self, x_train, y_train, model_type, number=10000):
         if model_type == "RD":
             classifier = RandomForestClassifier(n_estimators=number, random_state=0, n_jobs=-1)
+         if model_type=="Bagging":
+             classifier =BaggingClassifier( n_estimators=1000, random_state=0).fit(x_train, y_train)
+        if model_type=="ADA":
+             classifier =AdaBoostClassifier(n_estimators=1000,learning_rate=1).fit(_train, y_train)
         else:
             classifier = GradientBoostingClassifier(n_estimators=number, learning_rate=1, max_depth=1, random_state=0)
         return classifier.fit(x_train, y_train)
@@ -43,6 +50,7 @@ class TreeModelBuilder:
         else:
             return model.score(self.x_test, self.y_test)
 
+     ##accuracy_score(model,x_test,y_test) return the same result as model.score(x_test,y_test)??
     def __get_accuracy(self,  prediction, model_type):
         if model_type == "RD":
             return accuracy_score(self.y_test, prediction)
@@ -97,6 +105,26 @@ class SupportVectorMachine:
         accuracy_score_tuned = self.__tuning_model().score(self.x_test, self.y_test)
         return str("Results of model: " + accuracy_score_not_tuned + "\n" +
                    "Results of tuned model:" + accuracy_score_tuned)
+    
+    
+    
+   
+class RidgeCVClassifier:
+    def __init__(self, dataframe):
+        self.df = dataframe.drop("Unnamed: 0", axis=1)
+        self.df = self.df.values
+        self.x = self.df[:, 2:self.df.shape[1]]
+        self.y = self.df[:, 1].astype('float')
+        self.x_train, self.x_test, self.y_train, self.y_test = split(self.x, self.y)
+
+    def __building_model(self, x_train, y_train):
+        model = RidgeClassifierCV(alphas=[1e-15, 1e-10, 1e-8, 1e-4, 1e-3,1e-2, 1, 5, 10, 20,100]).fit(self.x_train, self.y_train)
+        return model
+    def __getaccuracy(self, model,x_train, y_train):
+        accuracy_score_ridge = self.__ridgecvmodel().score(self.x_test, self.y_test)#65%
+        cvscoreoftest = cross_val_score(self.__ridgecvmodel(), x_train, y_train, cv=3).mean()#75%
+        return str("accuracy " +  accuracy_score_ridge + "\n" +
+                   "accuracy based CV:" + cvscoreoftest)
 
 # ---------------------------------------------------------------------------------------------------
 # After creating an instance of this class and calling two methods for each model, should produce a 
