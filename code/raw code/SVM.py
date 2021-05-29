@@ -18,7 +18,7 @@ from sklearn.pipeline import Pipeline
 # In[157]:
 
 
-data=pd.read_csv('C:\\Users\\oysdfx\\Desktop\\Modern data\\newdata.csv')
+data=pd.read_csv('../../data/final_data/newdata.csv')
 y=data['water security index']
 x=data.iloc[:,2:]
 X_train, X_test, Y_train, Y_test = train_test_split(x, y, test_size=0.33, random_state=0)
@@ -49,7 +49,7 @@ grid_params  = [{
             'clf__gamma':gammalist_v
         },]
 f1 = make_scorer(f1_score , average='weighted')
-grid_search = GridSearchCV(pipe, param_grid=grid_params, cv=3, scoring=f1, n_jobs=2,return_train_score=True,verbose=3)                                                                        
+grid_search = GridSearchCV(pipe, param_grid=grid_params, cv=3, scoring=f1, n_jobs=2,return_train_score=True,verbose=3)
 grid_search.fit(X_train, Y_train)
 print(grid_search.best_params_)
 clf=svm.SVC(decision_function_shape='ovo',C=64,gamma=0.03125)
