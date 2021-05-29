@@ -22,7 +22,7 @@ from sklearn.model_selection import train_test_split
 
 
 
-AP2020=ace=pd.read_csv("2020APindex.csv")   
+"""AP2020=ace=pd.read_csv("2020APindex.csv")   
 AP2020=AP2020.merge(pd.read_csv("2020whole.csv"),on="country",how="inner")   
 
 #extract the 2020 Asian-pacific index and variables
@@ -43,10 +43,11 @@ print(main_list)
 
 newdata=AP2020[AP2016.columns].append(AP2016)
 print(newdata.columns)
+"""
 
-
-newdata.to_csv('newdata.csv')
-datas=newdata.values
+# newdata.to_csv('newdata.csv')
+newdata = pd.read_csv("../../data/final_data/newdata.csv")
+datas = newdata.values
 
 
 y=datas[:,1]
