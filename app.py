@@ -11,6 +11,17 @@ import dash_bootstrap_components as dbc
 from dash.dependencies import Input, Output
 import plotly.express as px
 import plotly.graph_objs as go
+from actual_code.models import RidgeLassoBuilder, TreeModelBuilder
+from skimage import io
+
+# ridge_model = RidgeLassoBuilder("data/final_data/final_data.csv", 0)
+# ridge_plots = [ridge_model.get_plot_alpha(), ridge_model.get_plot_cv()]
+# lasso_model = RidgeLassoBuilder("data/final_data/final_data.csv", 1)
+# lasso_model = [lasso_model.get_plot_alpha(), lasso_model.get_plot_cv()]
+# random_forest_model = TreeModelBuilder("data/final_data/final_data.csv")
+# random_forest_model.save_plot(0)
+# random_forest_model.save_plot(5)
+# importance = random_forest_model.important_features()
 
 df_main = [pd.read_excel("./data/prepared_indexes/2013.xlsx"), pd.read_excel("./data/prepared_indexes/2016.xlsx"),
            pd.read_excel("./data/prepared_indexes/2020.xlsx")]
@@ -34,12 +45,47 @@ countries_by_region = [
     ["Central and West Asia", "East Asia", "Pacific Asia", "South Asia", "South-East Asia", "Advanced Economies"]
 ]
 models_accuracy = {
-    "Tuned Random Forest": 0.82, "Decision Trees with Boost": 0.72, "AdaBoost": 0.82, "Bagging": 0.77,
-    "Support Vector Machine": 0.59, "Tuned Support Vector Machine": 0.86,
+    "Tuned Random Forest": 0.82, "Boost": 0.72, "AdaBoost": 0.82, "Bagging": 0.77,
+    "SVM": 0.59, "Tuned SVM": 0.86,
     "Ridge Regression": 0.86, "Lasso Regression": 0.64
 }
+importance = [[0.01197942, 0.0252544, 0.01870545, 0.02148561, 0.05945173, 0.05176992, 0.06291193, 0.02242445,
+               0.05262889, 0.0486974, 0.01721376, 0.01470227, 0.02198866, 0.04941561, 0.0157635, 0.06251182, 0.01953665,
+               0.01750288, 0.03589995, 0.0276397, 0.02569802, 0.01489663, 0.00777421, 0.01349954, 0.01655057,
+               0.06827465, 0.01630206, 0.01966815, 0.03211571, 0.02053284, 0.07930952, 0.01780274, 0.01009135],
+              ["Total area of the country", "Rural population", "Urban population",
+               "Population density", "GDP per capita", "Agriculture, value added",
+               "Urban population with access to safe drinking-water",
+               "Total renewable water resources per capita", "Total population with access to safe drinking-water",
+               "Rural population with access to safe drinking-water",
+               "Total water withdrawal per capita", "Total water withdrawal",
+               "Water Stress", "Agricultural water withdrawal as % of total water withdrawal",
+               "Agricultural water withdrawal", "Human Development Index",
+               "Municipal water withdrawal", "Industrial water withdrawal",
+               "Industrial Water Use Efficiency", "Irrigated Agriculture Water Use Efficiency", "Water Use Efficiency",
+               "Dam capacity per capita", "Resilience and securityStorage drought duration index",
+               "Nutrient security", "National Rainfall Index", "Mortality rate, infant", "longitude", "latitude",
+               "population ages 0-14", "Population ages 65 and above",
+               "Net official development assistance and official aid received", "% of total cultivated area drained",
+               "Total exploitable water resources"]]
 
-with open("code/actual_code/custom.geo-4.json", "r", encoding="utf-8") as f:
+# I didn't want to make this mess, adding images to Plotly from files and making it look okay is quite challenging
+figure1 = px.imshow(io.imread("data/figs/random_forest_0.png"), width=800, height=900)
+figure1.update_layout(width=900, height=1000, title="Tree of estimator 0", title_x=0.5)
+figure1.update_xaxes(showticklabels=False).update_yaxes(showticklabels=False)
+figure2 = px.imshow(io.imread("data/figs/random_forest_5.png"), width=800, height=900)
+figure2.update_layout(width=900, height=1000, title="Tree of estimator 5", title_x=0.5)
+figure2.update_xaxes(showticklabels=False).update_yaxes(showticklabels=False)
+
+
+def get_figure_regressions(number, type):
+    fig = px.imshow(io.imread("data/figs/" + type + str(number) + ".png"), width=700, height=700)
+    fig.update_layout(width=700, height=700, title_x=0.5)
+    fig.update_xaxes(showticklabels=False).update_yaxes(showticklabels=False)
+    return fig
+
+
+with open("actual_code/custom.geo-4.json", "r", encoding="utf-8") as f:
     countries = json.load(f)
 
 for i in countries["features"]:
@@ -54,13 +100,13 @@ app.layout = html.Div(
         html.H1(
             "Asia Water Development Outlooks",
             style={
-                'text-align': 'center'
+                "text-align": "center"
             }
         ),
         html.H2(
             "Data Exploration",
             style={
-                'text-align': 'center',
+                "text-align": "center",
                 "margin-top": 40,
                 "margin-bottom": 25
             }
@@ -91,7 +137,7 @@ app.layout = html.Div(
                             children=[
                                 html.Div(
                                     style={
-                                        'width': '50%',
+                                        "width": "50%",
                                         "margin-left": "25%"
                                     },
                                     children=[
@@ -127,7 +173,7 @@ app.layout = html.Div(
                                     ),
                                     html.Div(
                                         style={
-                                            'width': '80%',
+                                            "width": "80%",
                                             "margin-left": "10%",
                                             "margin-right": "10%"
                                         },
@@ -160,7 +206,7 @@ app.layout = html.Div(
                                     ),
                                     html.Div(
                                         style={
-                                            'width': '80%',
+                                            "width": "80%",
                                             "margin-left": "10%",
                                             "margin-right": "10%"
                                         },
@@ -211,7 +257,7 @@ app.layout = html.Div(
                             children=[
                                 html.Div(
                                     style={
-                                        'width': '80%',
+                                        "width": "80%",
                                         "margin-left": "10%",
                                         "margin-right": "10%"
                                     },
@@ -236,7 +282,7 @@ app.layout = html.Div(
                             children=[
                                 html.Div(
                                     style={
-                                        'width': '80%',
+                                        "width": "80%",
                                         "margin-left": "10%",
                                         "margin-right": "10%"
                                     },
@@ -274,7 +320,7 @@ app.layout = html.Div(
                 ),
                 html.Div(
                     style={
-                        'width': '50%',
+                        "width": "50%",
                         "margin-left": "25%"
                     },
                     children=[
@@ -300,7 +346,7 @@ app.layout = html.Div(
         html.H2(
             "Data Analysis",
             style={
-                'text-align': 'center',
+                "text-align": "center",
                 "margin-top": 40,
                 "margin-bottom": 25,
             }
@@ -319,12 +365,114 @@ app.layout = html.Div(
                         ],
                         layout=go.Layout(
                             title=go.layout.Title(
-                                text='Model Performance'
+                                text="Model Performance"
                             ),
                             template="none",
                             yaxis_range=[0, 1]
                         )
                     )
+                ),
+                html.H3(
+                    "Random Forest",
+                    style={
+                        "text-align": "center",
+                        "margin-top": 40,
+                        "margin-bottom": 25,
+                    }
+                ),
+                html.Div(
+                    children=[
+                        dcc.Graph(
+                            figure=go.Figure(
+                                data=[
+                                    go.Bar(
+                                        x=importance[0],
+                                        y=importance[1],
+                                        marker=dict(color=importance[0], colorscale="sunsetdark"),
+                                        orientation="h"
+                                    )
+                                ],
+                                layout=go.Layout(
+                                    title=go.layout.Title(
+                                        text="Important Features in Random Forest Model"
+                                    ),
+                                    template="none",
+                                    yaxis={"visible": False, "showticklabels": False},
+                                )
+                            )
+                        ),
+                        dbc.Row(
+                            children=[
+                                dbc.Col(
+                                    children=[
+                                        dcc.Graph(
+                                            figure=figure1
+                                        )
+                                    ]
+                                ),
+                                dbc.Col(
+                                    children=[
+                                        dcc.Graph(
+                                            figure=figure2
+                                        )
+                                    ]
+                                )
+                            ]
+                        )
+                    ]
+                ),
+                html.H3(
+                    "Ridge Regression",
+                    style={
+                        "text-align": "center",
+                        "margin-top": 40,
+                        "margin-bottom": 25,
+                    }
+                ),
+                dbc.Row(
+                    children=[
+                        dbc.Col(
+                            children=[
+                                dcc.Graph(
+                                    figure=get_figure_regressions(0, "Coef_")
+
+                                )
+                            ]
+                        ),
+                        dbc.Col(
+                            children=[
+                                dcc.Graph(
+                                    figure=get_figure_regressions(0, "Alpha_")
+                                )
+                            ]
+                        )
+                    ]
+                ),
+                html.H3(
+                    "Lasso Regression",
+                    style={
+                        "text-align": "center",
+                        "margin-top": 40,
+                        "margin-bottom": 25,
+                    }
+                ),
+                dbc.Row(
+                    children=[
+                        dbc.Col(
+                            children=[
+                                dcc.Graph(
+                                    figure=get_figure_regressions(1, "Coef_")
+                                )
+                            ]
+                        ),
+                        dbc.Col(
+                            children=[
+                                dcc.Graph(
+                                    figure=get_figure_regressions(1, "Alpha_")
+                                )
+                            ]
+                        )
+                    ]
                 )
             ]
         )
@@ -333,19 +481,19 @@ app.layout = html.Div(
 
 
 @app.callback(
-    Output('map', 'figure'),
-    Input('map_slider', 'value'))
+    Output("map", "figure"),
+    Input("map_slider", "value"))
 def update_map(value):
     df = df_main[value]
     fig = px.choropleth_mapbox(df,
                                geojson=countries,
-                               locations='Country',
-                               color='National Water Security Index',
+                               locations="Country",
+                               color="National Water Security Index",
                                color_continuous_scale="sunsetdark",
                                range_color=(1, 5),
                                mapbox_style="carto-positron",
                                zoom=2,
-                               center={'lat': 23.4037, "lon": 87.1952})
+                               center={"lat": 23.4037, "lon": 87.1952})
     fig.update_layout(title_text="Heatmap of National Water Security Index by Year",
                       title_x=0.5,
                       margin=dict(
@@ -358,8 +506,8 @@ def update_map(value):
 @app.callback(
     [Output("radar1", "figure"),
      Output("radar2", "figure")],
-    [Input('radar_slider1', 'value'),
-     Input('radar_slider2', 'value')])
+    [Input("radar_slider1", "value"),
+     Input("radar_slider2", "value")])
 def update_radars(region1, region2):
     def create_figure(value, key=None, left=False, visible=True):
         if value == 2016:
@@ -373,7 +521,7 @@ def update_radars(region1, region2):
                 data = df_main[2]
             else:
                 data = individual_indices_2020[key]
-            line_color = '#771963'
+            line_color = "#771963"
         if left:
             sliced = data[data["Country"].isin(countries_by_region[region1])].iloc[:, 1:6]
             theta = data.columns[1:6]
@@ -401,11 +549,11 @@ def update_radars(region1, region2):
             create_figure(2016, left=True)
         ],
         layout=go.Layout(
-            title=go.layout.Title(text='National Water Security Scores in ' + str(countries_by_region[6][region1])),
+            title=go.layout.Title(text="National Water Security Scores in " + str(countries_by_region[6][region1])),
             template="none",
             polar=dict(
-                radialaxis=dict(range=[0, 20], showticklabels=True, ticks=''),
-                angularaxis=dict(showticklabels=True, ticks='')
+                radialaxis=dict(range=[0, 20], showticklabels=True, ticks=""),
+                angularaxis=dict(showticklabels=True, ticks="")
             ),
             margin=dict(
                 b=30
@@ -418,8 +566,8 @@ def update_radars(region1, region2):
             title="Insights into Key Dimensions",
             template="none",
             polar=dict(
-                radialaxis=dict(range=[0, 5], showticklabels=True, ticks=''),
-                angularaxis=dict(showticklabels=True, ticks='')
+                radialaxis=dict(range=[0, 5], showticklabels=True, ticks=""),
+                angularaxis=dict(showticklabels=True, ticks="")
             )
         )
     )
@@ -439,26 +587,26 @@ def update_radars(region1, region2):
             active=0,
             showactive=True,
             buttons=list([
-                dict(label='K1',
-                     method='update',
-                     args=[{'visible': [True, True, False, False, False, False, False, False, False, False]},
-                           {'showlegend': True}]),
-                dict(label='K2',
-                     method='update',
-                     args=[{'visible': [False, False, True, True, False, False, False, False, False, False]},
-                           {'showlegend': True}]),
-                dict(label='K3',
-                     method='update',
-                     args=[{'visible': [False, False, False, False, True, True, False, False, False, False]},
-                           {'showlegend': True}]),
-                dict(label='K4',
-                     method='update',
-                     args=[{'visible': [False, False, False, False, False, False, True, True, False, False]},
-                           {'showlegend': True}]),
-                dict(label='K5',
-                     method='update',
-                     args=[{'visible': [False, False, False, False, False, False, False, False, True, True]},
-                           {'showlegend': True}]),
+                dict(label="K1",
+                     method="update",
+                     args=[{"visible": [True, True, False, False, False, False, False, False, False, False]},
+                           {"showlegend": True}]),
+                dict(label="K2",
+                     method="update",
+                     args=[{"visible": [False, False, True, True, False, False, False, False, False, False]},
+                           {"showlegend": True}]),
+                dict(label="K3",
+                     method="update",
+                     args=[{"visible": [False, False, False, False, True, True, False, False, False, False]},
+                           {"showlegend": True}]),
+                dict(label="K4",
+                     method="update",
+                     args=[{"visible": [False, False, False, False, False, False, True, True, False, False]},
+                           {"showlegend": True}]),
+                dict(label="K5",
+                     method="update",
+                     args=[{"visible": [False, False, False, False, False, False, False, False, True, True]},
+                           {"showlegend": True}]),
             ])
         )],
         margin=dict(
@@ -503,7 +651,7 @@ def update_key_dimension_results(year, region):
                       margin=dict(
                           b=30
                       ),
-                      barmode='stack',
+                      barmode="stack",
                       yaxis_range=scale
                       )
     return fig
@@ -522,12 +670,12 @@ def update_features(region):
             y=df.iloc[df[df["country"].isin(countries_by_region[region])].index.values,
                       df.columns.get_loc(column)].values,
             marker_color="#fed895",
-            visible=visible
+            visible=visible,
         )
 
     fig = go.Figure(
         layout=go.Layout(
-            title=go.layout.Title(text='Insight into 2020 data set columns by region (data is normalized)'),
+            title=go.layout.Title(text="Insight into 2020 data set columns by region (data is normalized)"),
             template="none"
         )
     )
@@ -545,35 +693,35 @@ def update_features(region):
                 active=0,
                 showactive=True,
                 buttons=list([
-                    dict(label='Rural population',
-                         method='update',
-                         args=[{'visible': [True, False, False, False, False, False, False, False]}]),
-                    dict(label='Urban population',
-                         method='update',
-                         args=[{'visible': [False, True, False, False, False, False, False, False]}]),
-                    dict(label='GDP per capita',
-                         method='update',
-                         args=[{'visible': [False, False, True, False, False, False, False, False]}]),
-                    dict(label='Total population with access to safe drinking-water',
-                         method='update',
-                         args=[{'visible': [False, False, False, True, False, False, False, False]}]),
-                    dict(label='Total water withdrawal',
-                         method='update',
-                         args=[{'visible': [False, False, False, False, True, False, False, False]}]),
-                    dict(label='Water Stress',
-                         method='update',
-                         args=[{'visible': [False, False, False, False, False, True, False, False]}]),
-                    dict(label='Human Development Index',
-                         method='update',
-                         args=[{'visible': [False, False, False, False, False, False, True, False]}]),
-                    dict(label='Water Use Efficiency',
-                         method='update',
-                         args=[{'visible': [False, False, False, False, False, False, False, True]}]),
+                    dict(label="Rural population",
+                         method="update",
+                         args=[{"visible": [True, False, False, False, False, False, False, False]}]),
+                    dict(label="Urban population",
+                         method="update",
+                         args=[{"visible": [False, True, False, False, False, False, False, False]}]),
+                    dict(label="GDP per capita",
+                         method="update",
+                         args=[{"visible": [False, False, True, False, False, False, False, False]}]),
+                    dict(label="Total population with access to safe drinking-water",
+                         method="update",
+                         args=[{"visible": [False, False, False, True, False, False, False, False]}]),
+                    dict(label="Total water withdrawal",
+                         method="update",
+                         args=[{"visible": [False, False, False, False, True, False, False, False]}]),
+                    dict(label="Water Stress",
+                         method="update",
+                         args=[{"visible": [False, False, False, False, False, True, False, False]}]),
+                    dict(label="Human Development Index",
+                         method="update",
+                         args=[{"visible": [False, False, False, False, False, False, True, False]}]),
+                    dict(label="Water Use Efficiency",
+                         method="update",
+                         args=[{"visible": [False, False, False, False, False, False, False, True]}]),
                 ]),
                 x=0.5,
-                xanchor='center',
+                xanchor="center",
                 y=0.9,
-                yanchor='bottom',
+                yanchor="bottom",
                 pad={"t": 40, "b": 40}
             )
         ],
@@ -585,5 +733,5 @@ def update_features(region):
     return fig
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     app.run_server()

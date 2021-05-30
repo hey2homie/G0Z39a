@@ -24,7 +24,7 @@ class Preprocessing:
 
     def replace(self):
         self.df = self.df[self.df.isna().sum(axis=1) < 19]
-        self.df.replace({'-': np.nan, '0': np.nan, '>99': 99})
+        self.df.replace({"-": np.nan, "0": np.nan, ">99": 99})
 
     def drop(self):
         threshold = self.df.shape[0] * 0.55
@@ -46,7 +46,7 @@ class Preprocessing:
         if norm:
             self.normalization()
         if write:
-            self.output_name = "../../data/final data/" + output_name + ".csv"
+            self.output_name = "/../data/final data/" + output_name + ".csv"
             self.df.to_csv(self.output_name)
 
     def get_dataframe(self):

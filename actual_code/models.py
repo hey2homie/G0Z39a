@@ -2,29 +2,20 @@ import pandas as pd
 from numpy import mean, logspace, min, max, meshgrid, linspace, c_, sqrt
 import matplotlib.pyplot as plt
 
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn import tree
+from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier, AdaBoostClassifier, BaggingClassifier
+from sklearn import tree, svm
 from sklearn.feature_selection import SelectFromModel
-from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split
-from sklearn import svm
-from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import make_scorer, f1_score
-from sklearn.linear_model import RidgeCV, Ridge
-from sklearn.linear_model import LassoCV, Lasso
-from sklearn.model_selection import RepeatedKFold
-from sklearn.model_selection import cross_val_score
-from sklearn.ensemble import BaggingClassifier
-from sklearn.ensemble import AdaBoostClassifier
+from sklearn.model_selection import GridSearchCV, train_test_split, RepeatedKFold, cross_val_score
+from sklearn.metrics import make_scorer, f1_score, accuracy_score
+from sklearn.linear_model import RidgeCV, Ridge, LassoCV, Lasso
 from sklearn.pipeline import Pipeline
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors._classification import KNeighborsClassifier
 from sklearn.decomposition import TruncatedSVD
 
 # ----------------------------------------------------------------------------------------------------------------------
 # I wrote these classes to have easy access to all the models and their performance based on the work of other student
-# which is located in the raw_code folder and added a regression models.
+# which is located in the raw_code folder and added a regression models. Ideally, plots should be used directly in
+# Plotly but the transfer function doesn't support and apparently they didn't fixed issue with the compatibility.
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -38,7 +29,7 @@ class TreeModelBuilder:
         self.dataframe = pd.read_csv(dataframe)
         self.df = self.dataframe.values
         self.x = self.df[:, 2:]
-        self.y = self.df[:, 1].astype('float')
+        self.y = self.df[:, 1].astype("float")
         self.x_train, self.x_test, self.y_train, self.y_test = split(self.x, self.y)
 
     def __building_model(self, x_train, y_train, model_type, number=10000):
@@ -65,22 +56,21 @@ class TreeModelBuilder:
     def __get_accuracy(self, prediction):
         return accuracy_score(self.y_test, prediction)
 
-    def important_features(self, model):
+    def important_features(self):
+        model = self.__building_model(self.x_train, self.y_train, "RD")
         results = model.feature_importances_
-        for i in range(len(self.df.columns[2:])):
-            print(self.df.columns[i] + results[i] + "\n")
+        return [results, self.dataframe.columns[2:]]
 
-    def save_plot(self, model):
-        plt.subplots(2, 2)
-        for i in range(0, 5):
-            fig = plt.figure(figsize=(20, 20))
-            tree.plot_tree(model.estimators_[i], feature_names=self.dataframe.columns[2:], filled=True, fontsize=10)
-            plt.show()
+    def save_plot(self, est):
+        model = self.__building_model(self.x_train, self.y_train, "RD")
+        plt.figure(figsize=(30, 30))
+        tree.plot_tree(model.estimators_[est], fontsize=12, feature_names=self.dataframe.columns[2:], filled=True)
+        plt.savefig("./data/figs/random_forest_" + str(est) + ".png", dpi=200)
 
     def decision_boundary(self):
-        model = self.__building_model(x_train=self.x_train, y_train=self.x_train, model_type="RD")
+        model = self.__building_model(x_train=self.x_train, y_train=self.y_train, model_type="RD")
         x_train_reduced = TruncatedSVD(n_components=2, random_state=0).fit_transform(self.x_train)
-        prediction = model.predict(self.y_train)
+        prediction = model.predict(self.x_train)
 
         x2d_x_min, x2d_x_max = min(x_train_reduced[:, 0]), max(x_train_reduced[:, 0])
         x2d_y_min, x2d_y_max = min(x_train_reduced[:, 1]), max(x_train_reduced[:, 1])
@@ -91,7 +81,7 @@ class TreeModelBuilder:
 
         plt.contourf(xx, yy, voronoi_background)
         plt.scatter(x_train_reduced[:, 0], x_train_reduced[:, 1], c=prediction)
-        plt.show()
+        plt.savefig("./data/figs/boundary.png", dpi=200)
 
     def get_model(self, model_type, number=0.05, accuracy=False):
         if model_type == "Boost":
@@ -115,24 +105,24 @@ class SupportVectorMachineBuilder:
 
     def __init__(self, dataframe):
         self.df = pd.read_csv(dataframe)
-        self.y = self.df['water security index']
+        self.y = self.df["water security index"]
         self.x = self.df.iloc[:, 2:]
         self.x_train, self.x_test, self.y_train, self.y_test = split(self.x, self.y)
         self.model = None
 
     def __build_model(self, c=None, gamma=None, tuning=False):
         if tuning:
-            clf = svm.SVC(decision_function_shape='ovo', C=c, gamma=gamma)
+            clf = svm.SVC(decision_function_shape="ovo", C=c, gamma=gamma)
         else:
-            clf = svm.SVC(decision_function_shape='ovo')
+            clf = svm.SVC(decision_function_shape="ovo")
         model = clf.fit(self.x_train, self.y_train)
         return model
 
     def __tuning_model(self):
         pipe = Pipeline([("svc", self.__build_model())])
         grid_parameters = {
-            'svc__C': [2 ** x for x in range(-5, 13)],
-            'svc__gamma': [2 ** x for x in range(-12, 4)]
+            "svc__C": [2 ** x for x in range(-5, 13)],
+            "svc__gamma": [2 ** x for x in range(-12, 4)]
         }
         grid = GridSearchCV(pipe, param_grid=grid_parameters,
                             cv=3, scoring=make_scorer(f1_score, average="weighted"), n_jobs=2,
@@ -154,7 +144,7 @@ class RidgeLassoBuilder:
     def __init__(self, dataframe, alpha):
         self.df = pd.read_csv(dataframe).values
         self.x = self.df[:, 2:self.df.shape[1]]
-        self.y = self.df[:, 1].astype('float')
+        self.y = self.df[:, 1].astype("float")
         self.x_train, self.x_test, self.y_train, self.y_test = split(self.x, self.y)
         self.alpha = alpha
 
@@ -165,48 +155,54 @@ class RidgeLassoBuilder:
         else:
             model = LassoCV(alphas=logspace(-4, -0.5, 30), cv=cv)
         model = model.fit(self.x_train, self.y_train)
-        scores = cross_val_score(model, self.x_train, self.y_train, scoring='neg_mean_absolute_error', cv=cv, n_jobs=-1)
+        scores = cross_val_score(model, self.x_train, self.y_train, scoring="neg_mean_absolute_error", cv=cv, n_jobs=-1)
         prediction = [round(x, 0) for x in list(model.predict(self.x_test))]
         return [mean(scores), accuracy_score(self.y_test, prediction)]
 
-    def get_plots_ridge_alpha(self):
-        alphas = logspace(-10, -2, 30)
+    def get_plot_alpha(self):
+        alphas = logspace(-10, -2, 200)
         coefs = []
         for a in alphas:
-            ridge = Ridge(alpha=a, fit_intercept=False)
-            ridge.fit(self.x_train, self.y_train)
-            coefs.append(ridge.coef_)
+            if self.alpha == 0:
+                model = Ridge(alpha=a, fit_intercept=False)
+                title = "Ridge "
+            else:
+                model = Lasso(alpha=a, fit_intercept=False)
+                title = "Lasso "
+            model.fit(self.x_train, self.y_train)
+            coefs.append(model.coef_)
 
-        plot = plt.gca()
-        plot.plot(alphas, coefs)
-        plot.set_xscale('log')
-        plot.set_xlim(plot.get_xlim()[::-1])
-        plt.xlabel('Alpha')
-        plt.ylabel('Weights')
-        plt.title('Ridge coefficients as a function of the regularization')
-        plt.axis('tight')
-        plt.show()
+        plot, ax = plt.subplots()
+        ax.plot(alphas, coefs)
+        ax.set(xlabel="Alpha", xscale="log", ylabel="Weights",
+               title= title + "Coefficients as a Function of the Regularization")
+        ax.invert_xaxis()
+        plot.savefig("./data/figs/Coef_" + str(self.alpha) + ".png", dpi=200)
 
-    def get_plots_ridge_cv(self):
-        model = Lasso(random_state=0, max_iter=10000)
+    def get_plot_cv(self):
+        if self.alpha == 0:
+            model = Ridge(random_state=0, max_iter=10000)
+            title = "Ridge "
+        else:
+            model = Lasso(random_state=0, max_iter=10000)
+            title = "Lasso "
         alphas = logspace(-4, -0.5, 30)
-        tuned_parameters = [{'alpha': alphas}]
+        tuned_parameters = [{"alpha": alphas}]
         model = GridSearchCV(model, tuned_parameters, cv=5, refit=False)
         model.fit(self.x_train, self.y_train)
-        scores = model.cv_results_['mean_test_score']
-        scores_std = model.cv_results_['std_test_score']
+        scores = model.cv_results_["mean_test_score"]
+        scores_std = model.cv_results_["std_test_score"]
         std_error = scores_std / sqrt(5)
 
-        plt.figure().set_size_inches(8, 6)
-        plt.semilogx(alphas, scores)
-        plt.semilogx(alphas, scores + std_error, 'b--')
-        plt.semilogx(alphas, scores - std_error, 'b--')
-        plt.fill_between(alphas, scores + std_error, scores - std_error, alpha=0.2)
-        plt.ylabel('CV score +/- std error')
-        plt.xlabel('alpha')
-        plt.axhline(max(scores), linestyle='--', color='.5')
-        plt.xlim([alphas[0], alphas[-1]])
-        plt.show()
+        plot, ax = plt.subplots()
+        ax.set(xlabel="Alpha", ylabel="CV score +/- std error", title="Cross-Validation of Alpha Parameter for " +
+                                                                      title + "Regression")
+        ax.semilogx(alphas, scores)
+        ax.semilogx(alphas, scores + std_error, "b--")
+        ax.semilogx(alphas, scores - std_error, "b--")
+        ax.fill_between(alphas, scores + std_error, scores - std_error, alpha=0.2)
+        ax.axhline(max(scores), linestyle="--", color=".5")
+        plot.savefig("./data/figs/Alpha_" + str(self.alpha) + ".png", dpi=200)
 
     def get_accuracy(self):
         results = self.__building_model()
@@ -215,11 +211,6 @@ class RidgeLassoBuilder:
 
 
 # ---------------------------------------------------------------------------------------------------
-# After creating an instance of this class and calling two methods for each model, should produce a 
-# list with two strings as element containing accuracy of the prediction for later use in the app.
-# Specify the paths. It should be relative, not absolute!
-# Additionally, create class for the other models following the template.
-# All the graphics I will handle myself after you are done.
 
 # mod1 = TreeModelBuilder("../../data/final_data/final_data.csv")
 # print(mod1.get_model("RD", accuracy=True))
