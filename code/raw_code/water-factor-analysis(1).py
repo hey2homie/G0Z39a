@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[2]:
-
+#This analysis is to use the final output to gain some knowledge about the relationship with population related variables and index.
 
 import numpy as np
 import pandas as pd
@@ -12,28 +11,11 @@ from scipy import stats
 sns.set_theme(style="dark",palette=sns.color_palette("husl",2))
 
 
-# In[3]:
 
 
-data=pd.read_csv("AveragedWhole2017.csv",index_col=[0])
-data.head()
-
-
-# In[4]:
-
-
-#delete null 
-
+data=pd.read_csv("../final_data.csv",index_col=[0])
 data.isnull().sum()
-
-
-# In[5]:
-
-
 data=data.dropna()
-
-
-# In[6]:
 
 
 # Group index into two classes
@@ -41,20 +23,16 @@ data=data.dropna()
 data['index']=data['index'].map({1:0,2:0,3:1,4:1})
 
 
-# In[7]:
-
-
 # To exclude the possibility of water stress to be the respond variable by looking at the correlation between it and the others.
-
-data[['Rural population (1000 inhab)', 
+listpop=['Rural population (1000 inhab)', 
            'Urban population (1000 inhab)',
            'Population density (inhab/km2)',
            'Urban population with access to safe drinking-water (JMP) (%)',
            'Rural population with access to safe drinking-water (JMP) (%)',
            'Total population with access to safe drinking-water (JMP) (%)',
            'population ages0-14',
-           'Population ages 65 and above(-of total population)'
-     ]].corrwith(data['SDG 6.4.2. Water Stress (%)'])
+           'Population ages 65 and above(-of total population)']
+data[listpop].corrwith(data['SDG 6.4.2. Water Stress (%)'])
 
 
 # In[8]:
@@ -73,63 +51,10 @@ data[['Rural population (1000 inhab)',
      ]].groupby('index').mean().T
 
 
-# In[14]:
-
-
-#Use 1.5  IQR to replace outliers
-cols=['Rural population (1000 inhab)', 
-           'Urban population (1000 inhab)',
-           'Population density (inhab/km2)',
-           'Urban population with access to safe drinking-water (JMP) (%)',
-           'Rural population with access to safe drinking-water (JMP) (%)',
-           'Total population with access to safe drinking-water (JMP) (%)',
-           'population ages0-14',
-           'Population ages 65 and above(-of total population)']
-for col in cols:
-    q1=data[col].quantile(0.25)
-    q3=data[col].quantile(0.75)
-    iqr=q3-q1
-    lower=q1-1.5*iqr
-    upper=q3+1.5*iqr
-    
-    data[col]=data[col].map(lambda x:x if x> lower else lower)
-    data[col]=data[col].map(lambda x:x if x< upper else upper)
-for col in ['Rural population (1000 inhab)', 
-           'Urban population (1000 inhab)',
-           'Population density (inhab/km2)',
-           'Urban population with access to safe drinking-water (JMP) (%)',
-           'Rural population with access to safe drinking-water (JMP) (%)',
-           'Total population with access to safe drinking-water (JMP) (%)',
-           'population ages0-14',
-           'Population ages 65 and above(-of total population)']:
-    plt.figure(figsize=(9,6))
-    sns.histplot(x=col,data=data)
-    plt.title("Historgram of {}".format(col),fontsize=12)
-    
-    plt.grid()
-    plt.show()
-
-
-# In[ ]:
-
-
-
-
-
-# In[15]:
-
 
 # See the difference of 0 and 1 in each variable
 
-for x in ['Rural population (1000 inhab)', 
-           'Urban population (1000 inhab)',
-           'Population density (inhab/km2)',
-           'Urban population with access to safe drinking-water (JMP) (%)',
-           'Rural population with access to safe drinking-water (JMP) (%)',
-           'Total population with access to safe drinking-water (JMP) (%)',
-           'population ages0-14',
-           'Population ages 65 and above(-of total population)'
-     ]:
+for x in listpop:
     plt.figure(figsize=(9,6))
     g1=data[data["index"]==0][x].values
     g2=data[data["index"]==1][x].values
@@ -148,26 +73,16 @@ for x in ['Rural population (1000 inhab)',
     plt.show()
 
 
-# In[16]:
-
 
 # Use t.test to see the significance of variables
 
-for col in ['Rural population (1000 inhab)', 
-           'Urban population (1000 inhab)',
-           'Population density (inhab/km2)',
-           'Urban population with access to safe drinking-water (JMP) (%)',
-           'Rural population with access to safe drinking-water (JMP) (%)',
-           'Total population with access to safe drinking-water (JMP) (%)',
-           'population ages0-14',
-           'Population ages 65 and above(-of total population)'
-     ]:
+for col in listpop:
     
-    # 分别取出index为0 1 时的数据
+    # Get the values of 0 and 1 seperately
     g1=data[data["index"]==0][col].values
     g2=data[data["index"]==1][col].values
     
-    # 先检查两列数据是否具有方差齐性
+   
     p_levene=stats.levene(g1, g2)[1]
     if p_levene>0.05:
         statistic,pvalue_ttest=stats.ttest_ind(g1, g2, equal_var = True)
@@ -177,15 +92,8 @@ for col in ['Rural population (1000 inhab)',
     print("{:<70}: ttest- statistic={:>10.5f};pvalue={:>10.5f}".format(col,statistic,pvalue_ttest))
 
 
-# + + The Urban population together with the last four variables has significant influence on index classification
+# The Urban population together with the last four variables has significant influence on index classification
 
-# In[ ]:
-
-
-
-
-
-# In[18]:
 
 
 # Use the feature of random forest model to output feature importance
@@ -194,14 +102,7 @@ for col in ['Rural population (1000 inhab)',
 from sklearn.ensemble import RandomForestClassifier
 classifier=RandomForestClassifier(random_state=1)
 
-x_cols=['Rural population (1000 inhab)', 
-           'Urban population (1000 inhab)',
-           'Population density (inhab/km2)',
-           'Urban population with access to safe drinking-water (JMP) (%)',
-           'Rural population with access to safe drinking-water (JMP) (%)',
-           'Total population with access to safe drinking-water (JMP) (%)',
-           'population ages0-14',
-           'Population ages 65 and above(-of total population)']
+x_cols=listpop
         
 x=data[x_cols]
 y=data['index']
@@ -213,18 +114,10 @@ df_feature_importances=pd.DataFrame(zip(x_cols,feature_importances),columns=["fe
 df_feature_importances
 
 
-# In[12]:
-
 
 # Visualize the importance
 
 plt.figure(figsize=(16,9))
 sns.barplot(x="features",y="importance",data=df_feature_importances)
 plt.xticks(rotation=-90)
-
-
-# In[ ]:
-
-
-
 
