@@ -15,7 +15,7 @@ class Preprocessing:
     def __init__(self, dataframe2016, dataframe2020, index2016, index2020):
         self.df2016 = pd.read_csv(dataframe2016)
         self.df2020 = pd.read_csv(dataframe2020)
-        self.df_coordinate = pd.read_csv("./data/raw data/coordinates.csv")
+        self.df_coordinate = pd.read_csv("../data/raw data/coordinates.csv")
 
         self.df2016 = pd.merge(self.df2016, self.df_coordinate, how='left', on='country')
         self.df2020 = pd.merge(self.df2020, self.df_coordinate, how='left', on='country')
@@ -74,7 +74,7 @@ class Preprocessing:
 
         self.merge_index()
         if write:
-            self.output_name = "./data/final data/" + output_name + ".csv"
+            self.output_name = "../data/final data/" + output_name + ".csv"
             self.df.to_csv(self.output_name)
 
 
@@ -84,6 +84,6 @@ class Preprocessing:
 
 
 
-#data2016 = Preprocessing("./data/raw data/2016raw.csv","./data/raw data/2020raw.csv","./data/raw data/2016APindex.csv","./data/raw data/2020APindex.csv")
+#data2016 = Preprocessing("../data/raw data/2016raw.csv","../data/raw data/2020raw.csv","../data/raw data/2016APindex.csv","../data/raw data/2020APindex.csv")
 #data2016.save("newData", norm=True)
 
