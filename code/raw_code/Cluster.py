@@ -266,7 +266,7 @@ plt.show()
 
 #Compare the index of Mianyong's model with the clustering results
 # In[ ]:
-data1=pd.read_csv("newdata.csv")
+data1=pd.read_csv("final_data.csv")
 data=data.reset_index("country")
 
 datamerged=pd.merge(data[["country","labels"]],data1[["country","water security index"]],on="country")

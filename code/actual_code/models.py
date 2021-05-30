@@ -22,6 +22,11 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors._classification import KNeighborsClassifier
 from sklearn.decomposition import TruncatedSVD
 
+# ----------------------------------------------------------------------------------------------------------------------
+# I wrote these classes to have easy access to all the models and their performance based on the work of other student
+# which is located in the raw_code folder and added a regression models.
+# ----------------------------------------------------------------------------------------------------------------------
+
 
 def split(x, y):
     return train_test_split(x, y, test_size=0.33, random_state=0)
@@ -66,9 +71,10 @@ class TreeModelBuilder:
             print(self.df.columns[i] + results[i] + "\n")
 
     def save_plot(self, model):
-        for i in model.estimators_:
+        plt.subplots(2, 2)
+        for i in range(0, 5):
             fig = plt.figure(figsize=(20, 20))
-            tree.plot_tree(i, feature_names=self.dataframe.columns[2:], filled=True, fontsize=10)
+            tree.plot_tree(model.estimators_[i], feature_names=self.dataframe.columns[2:], filled=True, fontsize=10)
             plt.show()
 
     def decision_boundary(self):
@@ -207,6 +213,7 @@ class RidgeLassoBuilder:
         return str("Prediction " + str(results[1]) + "\n" +
                    "Accuracy based CV:" + str(results[0]))
 
+
 # ---------------------------------------------------------------------------------------------------
 # After creating an instance of this class and calling two methods for each model, should produce a 
 # list with two strings as element containing accuracy of the prediction for later use in the app.
@@ -214,14 +221,12 @@ class RidgeLassoBuilder:
 # Additionally, create class for the other models following the template.
 # All the graphics I will handle myself after you are done.
 
-# mod = TreeModelBuilder("../../data/final_data/newdata.csv")
-# print(mod.get_model("RD", accuracy=True))
-# print(mod.get_model("Boost", accuracy=True))
-# print(mod.get_model("Bagging", accuracy=True))
-# print(mod.get_model("ADA", accuracy=True))
-# model1 = SupportVectorMachineBuilder("../../data/final_data/newdata.csv")
-# print(model1.get_accuracy())
-
-
-mod0 = RidgeLassoBuilder("../../data/final_data/newdata.csv", 0)
-mod0.get_plots_ridge_cv()
+# mod1 = TreeModelBuilder("../../data/final_data/final_data.csv")
+# print(mod1.get_model("RD", accuracy=True))
+# print(mod1.get_model("Boost", accuracy=True))
+# print(mod1.get_model("Bagging", accuracy=True))
+# print(mod1.get_model("ADA", accuracy=True))
+# mod2 = SupportVectorMachineBuilder("../../data/final_data/final_data.csv")
+# print(mod2.get_accuracy())
+# mod3 = RidgeLassoBuilder("../../data/final_data/final_data.csv", 0)
+# print(mod3.get_accuracy())

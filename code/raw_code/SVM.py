@@ -18,7 +18,7 @@ from sklearn.pipeline import Pipeline
 # In[157]:
 
 
-data=pd.read_csv('../../data/final_data/newdata.csv')
+data=pd.read_csv('../../data/final_data/final_data.csv')
 y=data['water security index']
 x=data.iloc[:,2:]
 X_train, X_test, Y_train, Y_test = train_test_split(x, y, test_size=0.33, random_state=0)
