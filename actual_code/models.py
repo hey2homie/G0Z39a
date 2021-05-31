@@ -85,8 +85,10 @@ class TreeModelBuilder:
     def __get_accuracy(self, prediction):
         return accuracy_score(self.y_test, prediction)
 
-    def important_features(self):
+    def important_features(self, rebuild=False):
         model = self.__building_model(self.x_train, self.y_train, "RD")
+        if rebuild:
+            model = self.rebuild_model(model, "RD")
         results = model.feature_importances_
         return [results, self.dataframe.columns[2:]]
 
