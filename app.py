@@ -41,7 +41,7 @@ countries_by_region = [
      "Samoa", "Solomon Islands", "Timor-Leste", "Tonga", "Tuvalu", "Vanuatu"],
     ["Bangladesh", "Bhutan", "India", "Maldives", "Nepal", "Sri Lanka"],
     ["Cambodia", "Indonesia", "Lao  PDR", "Malaysia", "Myanmar", "Philippines", "Thailand", "Vietnam"],
-    ["Australia", "Brunei Darussalam", "Hong Kong, China", "Japan", "New Zealand", "Korea", "Singapore"],
+    ["Australia", "Brunei Darussalam", "Hong Kong, China", "Japan", "New Zealand", "Republic of Korea", "Singapore"],
     ["Central and West Asia", "East Asia", "Pacific Asia", "South Asia", "South-East Asia", "Advanced Economies"]
 ]
 models_accuracy = {
@@ -68,6 +68,7 @@ importance = [[0.01197942, 0.0252544, 0.01870545, 0.02148561, 0.05945173, 0.0517
                "population ages 0-14", "Population ages 65 and above",
                "Net official development assistance and official aid received", "% of total cultivated area drained",
                "Total exploitable water resources"]]
+allindex = pd.read_csv("./data/final_data/allindex2020.csv")
 
 # I didn't want to make this mess, adding images to Plotly from files and making it look okay is quite challenging
 figure1 = px.imshow(io.imread("data/figs/random_forest_0.png"), width=800, height=900)
@@ -85,11 +86,11 @@ def get_figure_regressions(number, type):
     return fig
 
 
-with open("actual_code/custom.geo-4.json", "r", encoding="utf-8") as f:
+with open("actual_code/custom.geo.json", "r", encoding="utf-8") as f:
     countries = json.load(f)
 
 for i in countries["features"]:
-    i["id"] = (i["properties"]["name"])
+    i["id"] = (i["properties"]["name_long"])
 
 server = flask.Flask(__name__)
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP], server=server)
@@ -400,6 +401,19 @@ app.layout = html.Div(
                                     yaxis={"visible": False, "showticklabels": False},
                                 )
                             )
+                        ),
+                        dcc.Graph(
+                          figure=px.choropleth_mapbox(allindex,
+                               geojson=countries,
+                               locations="Country",
+                               color="Water Security Index",
+                               color_continuous_scale="sunsetdark",
+                               range_color=(1, 5),
+                               mapbox_style="carto-positron",
+                               zoom=2,
+                               center={"lat": 23.4037, "lon": 87.1952},
+                               title="Heatmap of the Predicted National Water Security Index in 2020"
+                                                      ).update(layout=dict(title=dict(x=0.5)))
                         ),
                         dbc.Row(
                             children=[
