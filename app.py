@@ -69,6 +69,7 @@ importance = [[0.01197942, 0.0252544, 0.01870545, 0.02148561, 0.05945173, 0.0517
                "Net official development assistance and official aid received", "% of total cultivated area drained",
                "Total exploitable water resources"]]
 allindex = pd.read_csv("./data/final_data/allindex2020.csv")
+preidctions_future = pd.read_csv("./data/final_data/allindex2025.csv")
 
 # I didn't want to make this mess, adding images to Plotly from files and making it look okay is quite challenging
 figure1 = px.imshow(io.imread("data/figs/random_forest_0.png"), width=800, height=900)
@@ -85,6 +86,25 @@ def get_figure_regressions(number, type):
     fig.update_xaxes(showticklabels=False).update_yaxes(showticklabels=False)
     return fig
 
+
+def get_heatmap(number):
+    if number == 1:
+        dataframe = allindex
+        title = "Heatmap of the Predicted National Water Security Index in 2020"
+    else:
+        dataframe = preidctions_future
+        title = "Heatmap of the Predicted National Water Security Index for 2025 in Selected Countries"
+    return px.choropleth_mapbox(dataframe,
+                                geojson=countries,
+                                locations="Country",
+                                color="Water Security Index",
+                                color_continuous_scale="sunsetdark",
+                                range_color=(1, 5),
+                                mapbox_style="carto-positron",
+                                zoom=2,
+                                center={"lat": 23.4037, "lon": 87.1952},
+                                title=title
+                                ).update(layout=dict(title=dict(x=0.5)))
 
 with open("actual_code/custom.geo.json", "r", encoding="utf-8") as f:
     countries = json.load(f)
@@ -403,17 +423,10 @@ app.layout = html.Div(
                             )
                         ),
                         dcc.Graph(
-                          figure=px.choropleth_mapbox(allindex,
-                               geojson=countries,
-                               locations="Country",
-                               color="Water Security Index",
-                               color_continuous_scale="sunsetdark",
-                               range_color=(1, 5),
-                               mapbox_style="carto-positron",
-                               zoom=2,
-                               center={"lat": 23.4037, "lon": 87.1952},
-                               title="Heatmap of the Predicted National Water Security Index in 2020"
-                                                      ).update(layout=dict(title=dict(x=0.5)))
+                          figure=get_heatmap(1)
+                        ),
+                        dcc.Graph(
+                          figure=get_heatmap(2)
                         ),
                         dbc.Row(
                             children=[
