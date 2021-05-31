@@ -2,35 +2,6 @@ import pandas as pd
 from numpy import mean, logspace, min, max, meshgrid, linspace, c_, sqrt
 import matplotlib.pyplot as plt
 
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.ensemble import RandomForestClassifier
-from sklearn import tree
-from sklearn.feature_selection import SelectFromModel
-from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split
-from sklearn import svm
-from sklearn.model_selection import GridSearchCV
-from sklearn.metrics import make_scorer, f1_score
-from sklearn.linear_model import RidgeCV, Ridge
-from sklearn.linear_model import LassoCV, Lasso
-from sklearn.model_selection import RepeatedKFold
-from sklearn.model_selection import cross_val_score
-from sklearn.ensemble import BaggingClassifier
-from sklearn.ensemble import AdaBoostClassifier
-from sklearn.pipeline import Pipeline
-from sklearn.neighbors._classification import KNeighborsClassifier
-from sklearn.decomposition import TruncatedSVD
-
-# ----------------------------------------------------------------------------------------------------------------------
-# I wrote these classes to have easy access to all the models and their performance based on the work of other student
-# which is located in the raw_code folder and added a regression models.
-# ----------------------------------------------------------------------------------------------------------------------
-
-
-import pandas as pd
-from numpy import mean, logspace, min, max, meshgrid, linspace, c_, sqrt
-import matplotlib.pyplot as plt
-
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier, AdaBoostClassifier, BaggingClassifier
 from sklearn import tree, svm
 from sklearn.feature_selection import SelectFromModel
@@ -72,7 +43,7 @@ class TreeModelBuilder:
             classifier = GradientBoostingClassifier(n_estimators=number, learning_rate=1, max_depth=1, random_state=0)
         return classifier.fit(x_train, y_train)
 
-    def rebuild_model(self, model, model_type, number=0.05):
+    def __rebuild_model(self, model, model_type, number=0.05):
         rebuild = SelectFromModel(model, threshold=number).fit(self.x_train, self.y_train)
         x_important_train, x_important_test = rebuild.transform(self.x_train), rebuild.transform(self.x_test)
         rebuild = self.__building_model(x_important_train, self.y_train, model_type=model_type, number=1000)
@@ -85,10 +56,8 @@ class TreeModelBuilder:
     def __get_accuracy(self, prediction):
         return accuracy_score(self.y_test, prediction)
 
-    def important_features(self, rebuild=False):
+    def important_features(self):
         model = self.__building_model(self.x_train, self.y_train, "RD")
-        if rebuild:
-            model = self.rebuild_model(model, "RD")
         results = model.feature_importances_
         return [results, self.dataframe.columns[2:]]
 
@@ -119,7 +88,7 @@ class TreeModelBuilder:
             number = 0.01
         model = self.__building_model(self.x_train, self.y_train, model_type=model_type)
         if model_type != "Bagging" and model_type != "ADA":
-            rebuild_model = self.rebuild_model(model, model_type=model_type, number=number)
+            rebuild_model = self.__rebuild_model(model, model_type=model_type, number=number)
             if accuracy:
                 return [self.__get_score(model), self.__get_accuracy(rebuild_model[1])]
             else:
@@ -206,7 +175,7 @@ class RidgeLassoBuilder:
         plot, ax = plt.subplots()
         ax.plot(alphas, coefs)
         ax.set(xlabel="Alpha", xscale="log", ylabel="Weights",
-               title=title + "Coefficients as a Function of the Regularization")
+               title= title + "Coefficients as a Function of the Regularization")
         ax.invert_xaxis()
         plot.savefig("./data/figs/Coef_" + str(self.alpha) + ".png", dpi=200)
 
@@ -240,116 +209,15 @@ class RidgeLassoBuilder:
         return str("Prediction " + str(results[1]) + "\n" +
                    "Accuracy based CV:" + str(results[0]))
 
-# ----------------------------------------------------------------------------------------------------------------------
 
-import numpy as np
-import pandas as pd
+# ---------------------------------------------------------------------------------------------------
 
-
-
-df=pd.read_csv('newaquastat.csv')
-
-df=df.dropna(axis=0)
-
-def extract(name):
-    data=df.loc[df['Variable Name']==name]
-    return data
-
-
-##Then do the polynomial regression of years and the value of the variable for every variable. 
-#Use polynomial because don't what the model is between years and the variable and polynomial can find the proper model by adjusting the degree.
-def get2025(name):
-    df_AWW=df.loc[df['Variable Name']==name]
-    area=df_AWW['Area']
-    area=list(set(area))
-    df_AWW2025=pd.DataFrame(columns=('Area',name))
-    for i in range(0,len(area)):
-        df_areai=df_AWW.loc[df_AWW['Area']==area[i]]
-        x=df_areai['Year']
-        y=df_areai['Value']
-        p=np.poly1d(np.polyfit(x,y,1))
-        predict=p(2025)
-        df_AWW2025=df_AWW2025.append(pd.DataFrame({'Area':[area[i]],name:[predict]}))
-    return df_AWW2025
-        #predict=p(2025)
-        #Put the predicted result in a dataframe
-    
-
-def mergeall(vv):
-    length=len(vv)
-    result=pd.merge(get2025(vv[0]),get2025(vv[1]),on=['Area'])
-    for i in range(2,length):
-        result=pd.merge(result,get2025(vv[i]),on=['Area'])
-    return result
-
-
-def getfromother(name11):
-    df_PA65=pd.read_csv(name11+".csv",header=None)
-    df_PA65=df_PA65.dropna(axis=0)
-    x=pd.to_numeric(df_PA65.iloc[0,3:])
-    df_PA2025=pd.DataFrame(columns=('Area',name11))
-    for i in range(1,df_PA65.shape[0]):
-        y=pd.to_numeric(df_PA65.iloc[i,3:])
-        p=np.poly1d(np.polyfit(x,y,4))
-        predict=p(2025)
-        df_PA2025=df_PA2025.append(pd.DataFrame({'Area':[df_PA65.iloc[i,0]],name11:[predict]}))
-    return df_PA2025
-
-
-#get 2025
-name1='GDP per capita (current US$/inhab)'
-name2='Agriculture, value added (% GDP) (%)'
-name3='Human Development Index (HDI) [highest = 1] (-)'
-name4='Agricultural water withdrawal as % of total water withdrawal (%)'
-name5='Total population with access to safe drinking-water (JMP) (%)'
-name6='Urban population with access to safe drinking-water (JMP) (%)'
-name7="Mortality rate, infant (per 1,000 live births)"
-name8="Net official development assistance and official aid received (current US$)"
-
-vv=[name1,name2,name3,name4,name5,name6]
-result1=mergeall(vv)
-result1=pd.merge(result1,getfromother(name8),on=['Area'])
-result1=pd.merge(result1,getfromother(name7),on=['Area'])
-
-result1.to_csv('nrom_2025.csv')
-
-
-
-
-
-#predict the index of 2025
-mod1=TreeModelBuilder('newData2.csv')
-newx=pd.read_csv("nrom_2025.csv")
-xx=newx.values[:,2:]
-
-
-yy=mod1.rebuild_model(xx,name=False)[1]
-newx["water security index"]=yy
-newx.to_csv("allindex2025.csv")
-
-
-
-#predict the index of other countries
-featurename=mod1.important_features(xx,name=True)[1]
-all2020=pd.read_csv("2020whole.csv")
-x2020=all2020[featurename]
-y=mod1.rebuild_model(x2020,name=False)[1]
-
-all2020["water security index"]=y
-all2020.to_csv("allindex20201.csv")
-
-
-
-#the accuracy of each model
-print(mod1.get_model("RD", accuracy=True))
-
-
-
-print(mod1.get_model("Boost", accuracy=True))
-print(mod1.get_model("Bagging", accuracy=True))
-print(mod1.get_model("ADA", accuracy=True))
-mod2 = SupportVectorMachineBuilder('newData2.csv')
-print(mod2.get_accuracy())
-mod3 = RidgeLassoBuilder('newData2.csv', 0)
-print(mod3.get_accuracy())
-
+# mod1 = TreeModelBuilder("../../data/final_data/final_data.csv")
+# print(mod1.get_model("RD", accuracy=True))
+# print(mod1.get_model("Boost", accuracy=True))
+# print(mod1.get_model("Bagging", accuracy=True))
+# print(mod1.get_model("ADA", accuracy=True))
+# mod2 = SupportVectorMachineBuilder("../../data/final_data/final_data.csv")
+# print(mod2.get_accuracy())
+# mod3 = RidgeLassoBuilder("../../data/final_data/final_data.csv", 0)
+# print(mod3.get_accuracy())
