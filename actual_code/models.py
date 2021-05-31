@@ -235,6 +235,76 @@ class RidgeLassoBuilder:
 
 
 
+import numpy as np
+import pandas as pd
+
+
+
+df=pd.read_csv('newaquastat.csv')
+
+df=df.dropna(axis=0)
+
+def extract(name):
+    data=df.loc[df['Variable Name']==name]
+    return data
+
+
+##Then do the polynomial regression of years and the value of the variable for every variable. 
+#Use polynomial because don't what the model is between years and the variable and polynomial can find the proper model by adjusting the degree.
+def get2025(name):
+    df_AWW=df.loc[df['Variable Name']==name]
+    area=df_AWW['Area']
+    area=list(set(area))
+    df_AWW2025=pd.DataFrame(columns=('Area',name))
+    for i in range(0,len(area)):
+        df_areai=df_AWW.loc[df_AWW['Area']==area[i]]
+        x=df_areai['Year']
+        y=df_areai['Value']
+        p=np.poly1d(np.polyfit(x,y,1))
+        predict=p(2025)
+        df_AWW2025=df_AWW2025.append(pd.DataFrame({'Area':[area[i]],name:[predict]}))
+    return df_AWW2025
+        #predict=p(2025)
+        #Put the predicted result in a dataframe
+    
+
+def mergeall(vv):
+    length=len(vv)
+    result=pd.merge(get2025(vv[0]),get2025(vv[1]),on=['Area'])
+    for i in range(2,length):
+        result=pd.merge(result,get2025(vv[i]),on=['Area'])
+    return result
+
+
+def getfromother(name11):
+    df_PA65=pd.read_csv(name11+".csv",header=None)
+    df_PA65=df_PA65.dropna(axis=0)
+    x=pd.to_numeric(df_PA65.iloc[0,3:])
+    df_PA2025=pd.DataFrame(columns=('Area',name11))
+    for i in range(1,df_PA65.shape[0]):
+        y=pd.to_numeric(df_PA65.iloc[i,3:])
+        p=np.poly1d(np.polyfit(x,y,4))
+        predict=p(2025)
+        df_PA2025=df_PA2025.append(pd.DataFrame({'Area':[df_PA65.iloc[i,0]],name11:[predict]}))
+    return df_PA2025
+
+
+#get 2025
+name1='GDP per capita (current US$/inhab)'
+name2='Agriculture, value added (% GDP) (%)'
+name3='Human Development Index (HDI) [highest = 1] (-)'
+name4='Agricultural water withdrawal as % of total water withdrawal (%)'
+name5='Total population with access to safe drinking-water (JMP) (%)'
+name6='Urban population with access to safe drinking-water (JMP) (%)'
+name7="Mortality rate, infant (per 1,000 live births)"
+name8="Net official development assistance and official aid received (current US$)"
+
+vv=[name1,name2,name3,name4,name5,name6]
+result1=mergeall(vv)
+result1=pd.merge(result1,getfromother(name8),on=['Area'])
+result1=pd.merge(result1,getfromother(name7),on=['Area'])
+
+result1.to_csv('nrom_2025.csv')
 
 
 
